@@ -1,0 +1,65 @@
+{
+  "name": "is-hotkey-combine",
+  "version": "1.0.0",
+  "main": "dist/index.cjs.js",
+  "description": "The shortest way to check multi-times keydown",
+  "author": "imcuttle <moyuyc95@gmail.com>",
+  "scripts": {
+    "test": "jest",
+    "prepublishOnly": "npm test",
+    "test-ci": "npm run clean && npm test",
+    "prepare": "npm run build",
+    "clean": "rimraf dist",
+    "build": "npm run clean && rollup -c",
+    "dev": "npm run build -- -w",
+    "version": "npm run changelog",
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0 && git add CHANGELOG.md"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged",
+      "commit-msg": "commitlint -e $HUSKY_GIT_PARAMS"
+    }
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=8"
+  },
+  "keywords": [
+    "imcuttle",
+    "is",
+    "hotkey",
+    "combine",
+    "is-hotkey-combine"
+  ],
+  "license": "MIT",
+  "repository": "imcuttle/is-hotkey-combine",
+  "jest": {
+    "testMatch": [
+      "**/__test{s,}__/*.(spec|test).{t,j}s{x,}"
+    ]
+  },
+  "module": "dist/index.module.js",
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.8.4",
+    "@commitlint/cli": "^8.3.5",
+    "@commitlint/config-conventional": "^8.3.4",
+    "@types/jest": "^25.1.1",
+    "conventional-changelog-cli": "^2.0.31",
+    "husky": "^4.2.1",
+    "jest": "^25.1.0",
+    "prettier": "^1.19.1",
+    "pretty-quick": "^2.0.1",
+    "rimraf": "^3.0.1",
+    "rollup": "^1.31.0",
+    "rollup-plugin-babel": "^4.3.3"
+  },
+  "dependencies": {
+    "is-hotkey": "^0.1.6"
+  }
+}
