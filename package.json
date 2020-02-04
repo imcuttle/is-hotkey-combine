@@ -1,6 +1,6 @@
 {
   "name": "is-hotkey-combine",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "dist/index.cjs.js",
   "description": "The shortest way to check multi-times keydown",
   "author": "imcuttle <moyuyc95@gmail.com>",
