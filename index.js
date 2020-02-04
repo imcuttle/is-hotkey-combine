@@ -6,10 +6,15 @@ import isHotkey from 'is-hotkey'
 export * from 'is-hotkey'
 
 export const COMBO_SEP_STRING = '->'
+export const EVENT_CACHE_KEY =
+  typeof Symbol !== 'undefined' ? Symbol.for('hotKeyCombineCache') : '[[hotKeyCombineCache]]'
 
 export function getCacheKeyByHotKeyCombo(combo) {
   return combo.join(COMBO_SEP_STRING)
 }
+
+const runInNextTick =
+  (typeof requestAnimationFrame === 'function' ? requestAnimationFrame : process.nextTick) || (cb => setTimeout(cb))
 
 export function createIsComboHotKey() {
   /**
@@ -18,12 +23,21 @@ export function createIsComboHotKey() {
   const cacheMap = new Map()
 
   /**
-   * 允许连击
    * @param hotKey - 'enter*2' | 'a->b'
    * @param event
    * @param options
    */
-  return function isHotKeyCombo(hotKey, event, { cache = cacheMap, duration = 250, ...opts } = {}) {
+  return function isHotKeyCombine(hotKey, event, { cache, duration = 250, ...opts } = {}) {
+    // When triggering bubbles sync, We should modify cache async
+    let runAction = runInNextTick
+
+    if (!cache) {
+      if (event.target && typeof event.target === 'object') {
+        cache = event.target[EVENT_CACHE_KEY] = event.target[EVENT_CACHE_KEY] || new Map()
+      } else {
+        cache = cacheMap
+      }
+    }
 
     const hotKeyCombo = Array.isArray(hotKey) ? hotKey : splitHotKey(hotKey, opts)
 
@@ -35,8 +49,8 @@ export function createIsComboHotKey() {
     const keyName = getCacheKeyByHotKeyCombo(hotKeyCombo)
 
     // Trigger again
-    if (cacheMap.has(keyName)) {
-      const oldEntity = cacheMap.get(keyName)
+    if (cache.has(keyName)) {
+      const oldEntity = cache.get(keyName)
       if (runIsHotKey(hotKeyCombo[oldEntity.triggerTimes])) {
         const newEntity = {
           triggerTimes: oldEntity.triggerTimes + 1,
@@ -44,18 +58,25 @@ export function createIsComboHotKey() {
         }
         if (newEntity.lastTriggerTimestamp - oldEntity.lastTriggerTimestamp > duration) {
           // Timeout
-          cacheMap.set(keyName, {
-            ...newEntity,
-            triggerTimes: 1
+          runAction(() => {
+            cache.set(keyName, {
+              ...newEntity,
+              triggerTimes: 1
+            })
           })
+
           return false
         }
 
         if (newEntity.triggerTimes === hotKeyCombo.length) {
-          cacheMap.delete(keyName)
+          runAction(() => {
+            cache.delete(keyName)
+          })
           return true
         }
-        cacheMap.set(keyName, newEntity)
+        runAction(() => {
+          cache.set(keyName, newEntity)
+        })
       }
     } else {
       const entity = {
@@ -64,7 +85,9 @@ export function createIsComboHotKey() {
       }
       if (runIsHotKey(hotKeyCombo[entity.triggerTimes])) {
         entity.triggerTimes++
-        cacheMap.set(keyName, entity)
+        runAction(() => {
+          cache.set(keyName, entity)
+        })
       }
     }
     return false
